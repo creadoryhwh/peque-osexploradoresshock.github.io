@@ -41,6 +41,17 @@
 @media(max-width:560px){.home-art{aspect-ratio:3/2;border-radius:16px}.home-status{display:none}.menu-hotspot{border-radius:16px}.home-accessible-actions{display:none!important}.accessible-btn{font-size:12px;padding:7px 9px;box-shadow:0 3px 0 #c9c0dc}.map-head{flex-direction:column}.map-node{width:155px;min-width:155px;min-height:135px}.map-node span{font-size:35px}}
 
 
+/* Iconos propios de cada juego dentro del mapa */
+.map-games-panel{margin-top:22px;background:linear-gradient(145deg,#fff,#f7f0ff);border:3px solid #e5d8fa;border-radius:24px;padding:20px}
+.map-games-title{text-align:center;font-size:clamp(22px,3vw,30px);font-weight:900;color:var(--morado);margin-bottom:4px}
+.map-games-subtitle{text-align:center;margin:0 0 16px}
+.map-game-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px}
+.map-game-node{min-width:0;min-height:145px;border:3px solid #fff;border-radius:22px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:#203047;box-shadow:0 7px 0 rgba(45,38,80,.16),0 8px 18px rgba(40,30,70,.10);transition:transform .15s,filter .15s}
+.map-game-node:hover{transform:translateY(-5px);filter:saturate(1.08)}
+.map-game-node span{font-size:42px;line-height:1}.map-game-node strong{font-size:16px}.map-game-node small{font-size:11px;line-height:1.2;text-align:center}.game-q{background:#d7c8ff;border-color:#8c65dc}.game-d{background:#c9f3ff;border-color:#35a9d5}.game-f{background:#c9f7c7;border-color:#59b85b}.game-m{background:#ffd4e5;border-color:#e16a9b}.game-p{background:#ffe5a9;border-color:#e2ad34}.game-o{background:#d8dcff;border-color:#6877d9}
+@media(max-width:900px){.map-game-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.map-games-panel{padding:14px}.map-game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.map-game-node{min-height:125px}.map-game-node span{font-size:34px}.map-game-node strong{font-size:14px}.map-game-node small{font-size:10px}}
+
 /* Celebración SHOCK: rayos, palillos de colores y globos */
 .shock-celebration{position:fixed;inset:0;z-index:99999;pointer-events:none;display:none;overflow:hidden}
 .shock-celebration.show{display:block}
@@ -135,6 +146,19 @@
       <div><span>⭐</span><strong>Mis estrellas:</strong> <span id="mapStars">0</span></div>
       <div><span>📚</span><strong>Historias:</strong> <span id="mapStoryCount">0</span></div>
       <div><span>🎮</span><strong>Juegos:</strong> <span id="mapGames">0/6</span></div>
+    </div>
+
+    <div class="map-games-panel">
+      <div class="map-games-title">🎮 Zona de desafíos</div>
+      <p class="muted map-games-subtitle">Cada tipo de juego tiene su propio icono. ¡Elige un desafío!</p>
+      <div class="map-game-grid">
+        <button class="map-game-node game-q" onclick="startQuiz()"><span>❓</span><strong>Quiz</strong><small>Preguntas bíblicas</small></button>
+        <button class="map-game-node game-d" onclick="startDragGame()"><span>🖐️</span><strong>Arrastrar</strong><small>Coloca cada elemento</small></button>
+        <button class="map-game-node game-f" onclick="startFindGame()"><span>🔎</span><strong>Buscar</strong><small>Encuentra objetos</small></button>
+        <button class="map-game-node game-m" onclick="startMemory()"><span>🃏</span><strong>Memoria</strong><small>Encuentra parejas</small></button>
+        <button class="map-game-node game-p" onclick="startPuzzle()"><span>🧩</span><strong>Rompecabezas</strong><small>Completa la creación</small></button>
+        <button class="map-game-node game-o" onclick="startOrder()"><span>🔢</span><strong>Ordenar</strong><small>Los 7 días de la creación</small></button>
+      </div>
     </div>
   </div>
 </section>
@@ -358,9 +382,17 @@ function celebrateShock(message='¡Libro completado! ⭐', final=false){
       el.style.color=colors[i%colors.length]; el.style.setProperty('--dx',((Math.random()-.5)*260)+'px'); el.style.setProperty('--dy',((Math.random()-.2)*260)+'px'); el.style.animationDelay=(Math.random()*.45)+'s';
       particles.appendChild(el);
     }
-    for(let i=0;i<(final?18:12);i++){
+    for(let i=0;i<(final?28:20);i++){
       const el=document.createElement('span'); el.className='celebrate-ribbon r'+((i%6)+1);
-      el.style.left=(3+Math.random()*94)+'%'; el.style.top=(-10-Math.random()*12)+'%'; el.style.setProperty('--rr',((Math.random()*70)-35)+'deg'); el.style.animationDelay=(Math.random()*.6)+'s';
+      el.style.left=(3+Math.random()*94)+'%'; el.style.top=(-10-Math.random()*12)+'%'; el.style.setProperty('--rr',((Math.random()*70)-35)+'deg'); el.style.animationDelay=(Math.random()*.7)+'s';
+      particles.appendChild(el);
+    }
+    for(let i=0;i<(final?16:10);i++){
+      const el=document.createElement('span'); el.className='color-stick';
+      el.style.left=(3+Math.random()*94)+'%'; el.style.top=(-8-Math.random()*10)+'%';
+      el.style.setProperty('--r',((Math.random()*70)-35)+'deg');
+      el.style.animationDelay=(Math.random()*.7)+'s';
+      el.style.background=`linear-gradient(${['#ff4f7a','#ffd43b','#25d9ff','#7b5cff','#65dc6b','#ff62b1'][i%6]},#fff 50%,${['#25d9ff','#7b5cff','#65dc6b','#ff4f7a','#ffd43b','#25d9ff'][i%6]})`;
       particles.appendChild(el);
     }
   }
@@ -372,10 +404,10 @@ function celebrateCurrentBook(index){
   if(!isBookCompletion(index))return;
   const book=getStoryBook(index);
   const pretty=book.replace(/\b\w/g,c=>c.toUpperCase());
-  const key='pe_book_celebrated_'+index;
+  const key='pe_book_celebrated_'+book.replace(/[^a-z0-9]+/gi,'_');
   if(localStorage.getItem(key)==='1')return;
   localStorage.setItem(key,'1');
-  celebrateShock(`¡Terminaste ${pretty}! ⭐ ¡Excelente explorador!`);
+  celebrateShock(`⚡ ¡Terminaste ${pretty}! 🎈 ⭐ ¡Excelente explorador!`);
 }
 function showScreen(id){
   if(id==='champion'&&championUnlocked){setTimeout(()=>celebrateShock('🏆 ¡Ganaste el premio THEOS LOGOS! ⭐',true),120);}
@@ -455,7 +487,7 @@ function setStoryFilter(f){storyFilter=f;renderStoryCards();}
 function renderStoryCards(){let q=(document.getElementById('storySearch')?.value||'').toLowerCase().trim();let items=stories.map((s,i)=>({s,i})).filter(x=>storyFilter==='all'||storyTestament(x.s)===storyFilter).filter(x=>!q||(`${x.s.title} ${x.s.capitulo||''} ${x.s.text}`).toLowerCase().includes(q));let info=document.getElementById('storyCountInfo');if(info)info.textContent=`Mostrando ${items.length} de ${stories.length} historias`;let box=document.getElementById('storyCards');if(!items.length){box.innerHTML='<div class="panel"><h3>🔎 No encontramos esa historia</h3><p class="muted">Prueba con otra palabra, por ejemplo: David, Jesús, Moisés, Pablo o Jonás.</p></div>';return;}box.innerHTML=items.map(({s,i})=>{let label=s.type==='capitulo'?`📖 ${s.capitulo}`:`🌱 Día ${i+1}`;return `<article class="card"><div class="emoji">${s.art}</div><h3>${label}: ${s.title}</h3><p>${s.text.slice(0,135)}...</p><button class="btn" onclick="openStory(${i})">Leer y escuchar</button></article>`}).join('');}
 function openStory(i){storyIndex=i;renderStory();awardStory(storyIndex);showScreen('story')}
 function renderStory(){let s=stories[storyIndex];let etiqueta=s.type==='capitulo'?s.capitulo:`Día ${storyIndex+1}`;const done=!!storyAwards[String(storyIndex)];$('storyDay').textContent=`${etiqueta} · Historia ${storyIndex+1} de ${stories.length} ${done?'· ⭐ +1 ganada':''}`;$('storyProgress').style.width=`${(storyIndex+1)/stories.length*100}%`;$('storyArt').textContent=s.art;$('storyTitle').textContent=s.title;$('storyText').textContent=s.text;$('storyVerse').textContent=s.verse;$('nextStoryBtn').textContent=storyIndex===stories.length-1?'Terminar historias ✓':'Siguiente ➡';const sc=document.getElementById('storyStarNotice');if(sc)sc.textContent=done?'⭐ Esta historia ya te dio 1 estrella.':'⭐ Esta historia te dará 1 estrella.';}
-function nextStory(){const earned=awardStory(storyIndex);if(earned){celebrateShock(isBookCompletion(storyIndex)?`⚡ ¡Terminaste ${getStoryBook(storyIndex).replace(/\b\w/g,c=>c.toUpperCase())}! +1 ⭐`:'⭐ ¡Historia completada! +1 ⭐');}if(storyIndex<stories.length-1){setTimeout(()=>{storyIndex++;renderStory()},earned?650:0)}else{storiesCompleted=allStoriesCompleted();if(storiesCompleted)localStorage.setItem('pe_stories_completed','1');checkChampionUnlock();if(championUnlocked){setTimeout(()=>{celebrateShock('🏆 ¡Ganaste el premio THEOS LOGOS! ⭐',true);showScreen('champion')},earned?700:0)}else{setTimeout(()=>showScreen('rewards'),earned?700:0)}}}function prevStory(){if(storyIndex>0){storyIndex--;renderStory()}else showScreen('storiesMenu')}
+function nextStory(){const index=storyIndex;const earned=awardStory(index);const bookDone=isBookCompletion(index);if(storyIndex<stories.length-1){storyIndex++;renderStory();if(bookDone){setTimeout(()=>celebrateCurrentBook(index),220);}}else{storiesCompleted=allStoriesCompleted();if(storiesCompleted)localStorage.setItem('pe_stories_completed','1');checkChampionUnlock();if(championUnlocked){showScreen('champion');setTimeout(()=>celebrateShock('🏆 ¡Ganaste el premio THEOS LOGOS! ⭐',250),220);}else{showScreen('rewards');if(bookDone)setTimeout(()=>celebrateCurrentBook(index),220);}}}function prevStory(){if(storyIndex>0){storyIndex--;renderStory()}else showScreen('storiesMenu')}
 function unlockChampion(){storiesCompleted=allStoriesCompleted();if(storiesCompleted)localStorage.setItem('pe_stories_completed','1');checkChampionUnlock();}
 function speakChampion(){if(!('speechSynthesis'in window)){alert('Este navegador no tiene voz disponible.');return;}speakNatural('¡Felicidades! Eres un Campeón Shock. Has completado toda la aventura bíblica. ¡Ganaste el premio THEOS LOGOS!',{rate:.78,pitch:1.05})}
 function speakStory(){if(!('speechSynthesis'in window)){alert('Este navegador no tiene voz disponible.');return;}awardStory(storyIndex);renderStory();let s=stories[storyIndex];speakNatural(`${s.title}. ${s.text}. Ahora escucha este versículo: ${s.verse}`,{rate:.80,pitch:1.02})}function stopVoice(){if('speechSynthesis'in window)speechSynthesis.cancel()}
@@ -495,7 +527,7 @@ function startFindGame(){findTargets=['🐟','🌳','☀️'];findFound=[];let d
 function renderFind(){$('findGrid').innerHTML=findObjects.map(o=>`<button class="find-cell ${o.found?'found':''}" onclick="clickFind(${o.id})" aria-label="Objeto de la escena">${o.found?'✓':o.e}</button>`).join('')}
 function clickFind(id){let o=findObjects.find(x=>x.id===id);if(!o||o.found)return;if(findTargets.includes(o.e)&&!findFound.includes(o.e)){o.found=true;findFound.push(o.e);$('target-'+findTargets.indexOf(o.e)).classList.add('found');$('findFeedback').textContent='¡Encontrado! '+o.e;renderFind();if(findFound.length===findTargets.length){let first=!awarded.find;$('findFeedback').textContent=award('find',3)+' ¡Encontraste todos los objetos!';celebrateShock('🔎 ¡Búsqueda completada! +3 ⭐');narrate('¡Excelente! Encontraste todos los objetos escondidos. ¡Ganaste estrellas!');}}else{$('findFeedback').textContent='Ese no es uno de los objetos de la lista. ¡Sigue buscando!';let b=document.querySelectorAll('.find-cell')[findObjects.findIndex(x=>x.id===id)];b.classList.add('missed');setTimeout(()=>b.classList.remove('missed'),300)}}
 // Ordering events: tap two cards to swap, drag supported, and up/down controls.
-const orderData=stories.map((s,i)=>({id:i+1,emoji:['✨','☁️','🌳','☀️','🐟','🦁','🌎'][i],title:s.title.replace('Dios creó ','').replace('Dios descansó','Dios descansó'),short:['La luz','El cielo','La tierra y las plantas','El sol, la luna y las estrellas','Los peces y las aves','Los animales y las personas','El descanso'][i]}));
+const orderData=[{id:1,emoji:'✨',title:'Día 1',short:'La luz'},{id:2,emoji:'☁️',title:'Día 2',short:'El cielo y las aguas'},{id:3,emoji:'🌳',title:'Día 3',short:'La tierra y las plantas'},{id:4,emoji:'☀️',title:'Día 4',short:'El sol, la luna y las estrellas'},{id:5,emoji:'🐟',title:'Día 5',short:'Los peces y las aves'},{id:6,emoji:'🦁',title:'Día 6',short:'Los animales y las personas'},{id:7,emoji:'😴',title:'Día 7',short:'Dios descansó'}];
 function startOrder(){orderItems=orderData.map(x=>({...x})).sort(()=>Math.random()-.5);orderPick=null;$('orderFeedback').textContent='';renderOrder();showScreen('order');narrateOrder()}
 function renderOrder(){$('orderList').innerHTML=orderItems.map((o,i)=>`<div class="order-item ${orderPick===i?'selected':''}" draggable="true" ondragstart="orderDragStart(event,${i})" ondragover="event.preventDefault()" ondrop="orderDrop(event,${i})" onclick="pickOrder(${i})"><span class="ord-num">${i+1}</span><span class="ord-emoji">${o.emoji}</span><span>${o.short}</span><span class="order-controls"><button onclick="event.stopPropagation();moveOrder(${i},-1)" aria-label="Subir" ${i===0?'disabled':''}>↑</button><button onclick="event.stopPropagation();moveOrder(${i},1)" aria-label="Bajar" ${i===orderItems.length-1?'disabled':''}>↓</button></span></div>`).join('')}
 function pickOrder(i){if(orderPick===null){orderPick=i;renderOrder();return;}if(orderPick===i){orderPick=null;renderOrder();return;}[orderItems[orderPick],orderItems[i]]=[orderItems[i],orderItems[orderPick]];orderPick=null;renderOrder()}
