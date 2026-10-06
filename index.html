@@ -87,6 +87,7 @@
 .champion-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
 @media(max-width:600px){.champion-art{border-radius:18px}.champion-note{font-size:14px}}
 
+.story-card{position:relative;overflow:visible}.shock-story-mark{display:inline-flex;align-items:center;justify-content:center;gap:5px;margin:6px 0 2px;padding:5px 10px;border-radius:999px;background:linear-gradient(135deg,#ffd43b,#25d9ff);color:#17245f;font-weight:1000;font-size:12px;box-shadow:0 4px 12px rgba(37,217,255,.25);text-shadow:0 1px 0 #fff}.shock-story-pending{display:inline-block;margin:6px 0 2px;padding:5px 10px;border-radius:999px;background:#eef1f7;color:#65708a;font-weight:800;font-size:12px}.story-shock-inline{display:inline-block;padding:3px 9px;border-radius:999px;background:#17245f;color:#ffd43b;font-weight:1000}.screen button:disabled#nextStoryBtn{opacity:.48;cursor:not-allowed;filter:grayscale(.35)}
 .story-star-notice{margin-top:14px;padding:10px 14px;border-radius:14px;background:#fff7d6;border:2px solid #ffd43b;font-weight:900;color:#8a5a00;text-align:center}
 </style></head>
 <body>
@@ -289,16 +290,19 @@ const stories=[
 ];
 const $=id=>document.getElementById(id);let stars=Number(localStorage.getItem('pe_stars')||0);let storyIndex=0;let quizIndex=0,quizScore=0,quizAnswered=false;let puzzle=[],puzzlePick=null;let memoryCards=[],memoryFirst=null,memoryLock=false,memoryMatches=0;let dragObjects=[],dragSelected=null,dragDone=0;let findObjects=[],findTargets=[],findFound=[];let orderItems=[],orderPick=null;let awarded=JSON.parse(localStorage.getItem('pe_awarded')||'{}');
 let storyAwards=JSON.parse(localStorage.getItem('pe_story_awards')||'{}');
+let storyListened=JSON.parse(localStorage.getItem('pe_story_listened')||'{}');
+let speechRunId=0;
 const REQUIRED_GAMES=['quiz','puzzle','memory','drag','find','order'];
 let storiesCompleted=false;
 let championUnlocked=false;
 function allGamesCompleted(){return REQUIRED_GAMES.every(k=>awarded[k]);}
 function completedGamesCount(){return REQUIRED_GAMES.filter(k=>awarded[k]).length;}
-function completedStoriesCount(){return Object.keys(storyAwards).filter(k=>storyAwards[k]).length;}
+function completedStoriesCount(){return Object.keys(storyListened).filter(k=>storyListened[k]).length;}
 function allStoriesCompleted(){return stories.length>0&&completedStoriesCount()>=stories.length;}
 function totalMaxStars(){return stories.length+(REQUIRED_GAMES.length*3);}
 function awardStory(i=storyIndex){
   const key=String(i);
+  if(!storyListened[key]) return false;
   if(!storyAwards[key]){
     storyAwards[key]=true;
     stars+=1;
@@ -311,6 +315,18 @@ function awardStory(i=storyIndex){
     return true;
   }
   return false;
+}
+function markStoryListened(i=storyIndex){
+  const key=String(i);
+  const wasListened=!!storyListened[key];
+  storyListened[key]=true;
+  localStorage.setItem('pe_story_listened',JSON.stringify(storyListened));
+  const gotStar=!storyAwards[key];
+  if(gotStar) awardStory(i);
+  else { storiesCompleted=allStoriesCompleted(); checkChampionUnlock(); }
+  renderStory();
+  renderStoryCards();
+  return !wasListened;
 }
 function checkChampionUnlock(){
   storiesCompleted=allStoriesCompleted();
@@ -404,10 +420,10 @@ function celebrateCurrentBook(index){
   if(!isBookCompletion(index))return;
   const book=getStoryBook(index);
   const pretty=book.replace(/\b\w/g,c=>c.toUpperCase());
-  const key='pe_book_celebrated_'+book.replace(/[^a-z0-9]+/gi,'_');
+  const key='pe_book_celebrated_v2_'+book.replace(/[^a-z0-9]+/gi,'_');
   if(localStorage.getItem(key)==='1')return;
   localStorage.setItem(key,'1');
-  celebrateShock(`⚡ ¡Terminaste ${pretty}! 🎈 ⭐ ¡Excelente explorador!`);
+  celebrateShock(`🎉 ¡Has avanzado, Explorador Shock! ⚡ Terminaste ${pretty}. 🎈⭐`);
 }
 function showScreen(id){
   if(id==='champion'&&championUnlocked){setTimeout(()=>celebrateShock('🏆 ¡Ganaste el premio THEOS LOGOS! ⭐',true),120);}
@@ -425,7 +441,7 @@ function restartAdventureFromZero(){
   stars=0; storyIndex=0; quizIndex=0; quizScore=0; quizAnswered=false;
   puzzle=[]; puzzlePick=null; memoryCards=[]; memoryFirst=null; memoryLock=false; memoryMatches=0;
   dragObjects=[]; dragSelected=null; dragDone=0; findObjects=[]; findTargets=[]; findFound=[];
-  orderItems=[]; orderPick=null; awarded={}; storyAwards={}; storiesCompleted=false; championUnlocked=false;
+  orderItems=[]; orderPick=null; awarded={}; storyAwards={}; storyListened={}; storiesCompleted=false; championUnlocked=false;
   document.querySelectorAll('.screen').forEach(sc=>sc.classList.remove('active'));
   const home=document.getElementById('home'); if(home)home.classList.add('active');
   updateStars(); renderHomeStatus(); renderRewards();
@@ -461,7 +477,7 @@ function speakNatural(text, options={}){
   const spokenText=String(text).replace(/\b([1-3])\s*Reyes\b/gi,(_,n)=>({1:'Primero',2:'Segundo',3:'Tercero'}[n])+' Reyes').replace(/\b([1-3])\s*Timoteo\b/gi,(_,n)=>({1:'Primera',2:'Segunda',3:'Tercera'}[n])+' Timoteo').replace(/\b([1-3])\s*Juan\b/gi,(_,n)=>({1:'Primera',2:'Segunda',3:'Tercera'}[n])+' Juan').replace(/\b([1-3])\s*Pedro\b/gi,(_,n)=>({1:'Primera',2:'Segunda',3:'Tercera'}[n])+' Pedro').replace(/\b([1-9][0-9]*)\s*[–-]\s*([1-9][0-9]*)\b/g,'$1 al $2').replace(/\b([1-9][0-9]*)\s*:\s*([1-9][0-9]*)\s*[–-]\s*([1-9][0-9]*)\b/g,'capítulo $1, versículos $2 al $3').replace(/\b([1-9][0-9]*)\s*:\s*([1-9][0-9]*)\b/g,'capítulo $1, versículo $2'); const parts=spokenText.replace(/\s+/g,' ').trim().split(/(?<=[.!?…])\s+/).filter(Boolean);
   let i=0;
   const playNext=()=>{
-    if(i>=parts.length) return;
+    if(i>=parts.length){ if(typeof options.onComplete==='function') options.onComplete(); return; }
     const u=new SpeechSynthesisUtterance(parts[i++]);
     if(selectedVoice) u.voice=selectedVoice;
     u.lang=selectedVoice?.lang || 'es-MX';
@@ -484,13 +500,13 @@ function narrateOrder(){narrate('Hola, explorador. En este juego debes ordenar l
 let storyFilter='all';
 function storyTestament(s){let r=(s.capitulo||'').toLowerCase(),t=(s.title||'').toLowerCase(); if(/génesis|éxodo|josué|jueces|samuel|reyes|isaías|jonás|daniel|ester|nehemías/.test(r)) return 'ot'; if(/hechos/.test(r)||/pablo/.test(t)) return 'acts'; if(/mateo|marcos|lucas|juan|timoteo|apocalipsis/.test(r)) return 'nt'; return s.type==='dia'?'ot':'all';}
 function setStoryFilter(f){storyFilter=f;renderStoryCards();}
-function renderStoryCards(){let q=(document.getElementById('storySearch')?.value||'').toLowerCase().trim();let items=stories.map((s,i)=>({s,i})).filter(x=>storyFilter==='all'||storyTestament(x.s)===storyFilter).filter(x=>!q||(`${x.s.title} ${x.s.capitulo||''} ${x.s.text}`).toLowerCase().includes(q));let info=document.getElementById('storyCountInfo');if(info)info.textContent=`Mostrando ${items.length} de ${stories.length} historias`;let box=document.getElementById('storyCards');if(!items.length){box.innerHTML='<div class="panel"><h3>🔎 No encontramos esa historia</h3><p class="muted">Prueba con otra palabra, por ejemplo: David, Jesús, Moisés, Pablo o Jonás.</p></div>';return;}box.innerHTML=items.map(({s,i})=>{let label=s.type==='capitulo'?`📖 ${s.capitulo}`:`🌱 Día ${i+1}`;return `<article class="card"><div class="emoji">${s.art}</div><h3>${label}: ${s.title}</h3><p>${s.text.slice(0,135)}...</p><button class="btn" onclick="openStory(${i})">Leer y escuchar</button></article>`}).join('');}
-function openStory(i){storyIndex=i;renderStory();awardStory(storyIndex);showScreen('story')}
-function renderStory(){let s=stories[storyIndex];let etiqueta=s.type==='capitulo'?s.capitulo:`Día ${storyIndex+1}`;const done=!!storyAwards[String(storyIndex)];$('storyDay').textContent=`${etiqueta} · Historia ${storyIndex+1} de ${stories.length} ${done?'· ⭐ +1 ganada':''}`;$('storyProgress').style.width=`${(storyIndex+1)/stories.length*100}%`;$('storyArt').textContent=s.art;$('storyTitle').textContent=s.title;$('storyText').textContent=s.text;$('storyVerse').textContent=s.verse;$('nextStoryBtn').textContent=storyIndex===stories.length-1?'Terminar historias ✓':'Siguiente ➡';const sc=document.getElementById('storyStarNotice');if(sc)sc.textContent=done?'⭐ Esta historia ya te dio 1 estrella.':'⭐ Esta historia te dará 1 estrella.';}
-function nextStory(){const index=storyIndex;const earned=awardStory(index);const bookDone=isBookCompletion(index);if(storyIndex<stories.length-1){storyIndex++;renderStory();if(bookDone){setTimeout(()=>celebrateCurrentBook(index),220);}}else{storiesCompleted=allStoriesCompleted();if(storiesCompleted)localStorage.setItem('pe_stories_completed','1');checkChampionUnlock();if(championUnlocked){showScreen('champion');setTimeout(()=>celebrateShock('🏆 ¡Ganaste el premio THEOS LOGOS! ⭐',250),220);}else{showScreen('rewards');if(bookDone)setTimeout(()=>celebrateCurrentBook(index),220);}}}function prevStory(){if(storyIndex>0){storyIndex--;renderStory()}else showScreen('storiesMenu')}
+function renderStoryCards(){let q=(document.getElementById('storySearch')?.value||'').toLowerCase().trim();let items=stories.map((s,i)=>({s,i})).filter(x=>storyFilter==='all'||storyTestament(x.s)===storyFilter).filter(x=>!q||(`${x.s.title} ${x.s.capitulo||''} ${x.s.text}`).toLowerCase().includes(q));let info=document.getElementById('storyCountInfo');if(info)info.textContent=`Mostrando ${items.length} de ${stories.length} historias`;let box=document.getElementById('storyCards');if(!items.length){box.innerHTML='<div class="panel"><h3>🔎 No encontramos esa historia</h3><p class="muted">Prueba con otra palabra, por ejemplo: David, Jesús, Moisés, Pablo o Jonás.</p></div>';return;}box.innerHTML=items.map(({s,i})=>{let label=s.type==='capitulo'?`📖 ${s.capitulo}`:`🌱 Día ${i+1}`;let listened=!!storyListened[String(i)];return `<article class="card story-card ${listened?'story-heard':''}"><div class="emoji">${s.art}</div><h3>${label}: ${s.title}</h3>${listened?'<div class="shock-story-mark" title="Historia escuchada">⚡ SHOCK</div>':'<div class="shock-story-pending">🎧 Pendiente de escuchar</div>'}<p>${s.text.slice(0,135)}...</p><button class="btn" onclick="openStory(${i})">${listened?'🔊 Escuchar de nuevo':'🎧 Escuchar historia'}</button></article>`}).join('');}
+function openStory(i){storyIndex=i;renderStory();showScreen('story')}
+function renderStory(){let s=stories[storyIndex];let etiqueta=s.type==='capitulo'?s.capitulo:`Día ${storyIndex+1}`;const listened=!!storyListened[String(storyIndex)];const earned=!!storyAwards[String(storyIndex)];$('storyDay').textContent=`${etiqueta} · Historia ${storyIndex+1} de ${stories.length} ${listened?'· ⚡ ESCUCHADA':''}`;$('storyProgress').style.width=`${(storyIndex+1)/stories.length*100}%`;$('storyArt').textContent=s.art;$('storyTitle').textContent=s.title;$('storyText').textContent=s.text;$('storyVerse').textContent=s.verse;$('nextStoryBtn').textContent=storyIndex===stories.length-1?'Terminar historias ✓':'Siguiente ➡';$('nextStoryBtn').disabled=!listened;const sc=document.getElementById('storyStarNotice');if(sc)sc.innerHTML=listened?`<span class="story-shock-inline">⚡ SHOCK</span> ${earned?'⭐ Esta historia ya te dio 1 estrella.':'⭐ Historia escuchada.'}`:'🎧 <strong>Escucha toda la historia</strong> para desbloquear el botón Siguiente.';}
+function nextStory(){const index=storyIndex;if(!storyListened[String(index)]){alert('🎧 Primero escucha toda la historia, Explorador Shock. Cuando termine la narración podrás avanzar.');return;}const bookDone=isBookCompletion(index);if(storyIndex<stories.length-1){storyIndex++;renderStory();if(bookDone){setTimeout(()=>celebrateCurrentBook(index),220);}}else{storiesCompleted=allStoriesCompleted();if(storiesCompleted)localStorage.setItem('pe_stories_completed','1');checkChampionUnlock();if(championUnlocked){showScreen('champion');setTimeout(()=>celebrateShock('🏆 ¡Ganaste el premio THEOS LOGOS! ⭐',true),220);}else{showScreen('rewards');if(bookDone)setTimeout(()=>celebrateCurrentBook(index),220);}}}function prevStory(){if(storyIndex>0){storyIndex--;renderStory()}else showScreen('storiesMenu')}
 function unlockChampion(){storiesCompleted=allStoriesCompleted();if(storiesCompleted)localStorage.setItem('pe_stories_completed','1');checkChampionUnlock();}
 function speakChampion(){if(!('speechSynthesis'in window)){alert('Este navegador no tiene voz disponible.');return;}speakNatural('¡Felicidades! Eres un Campeón Shock. Has completado toda la aventura bíblica. ¡Ganaste el premio THEOS LOGOS!',{rate:.78,pitch:1.05})}
-function speakStory(){if(!('speechSynthesis'in window)){alert('Este navegador no tiene voz disponible.');return;}awardStory(storyIndex);renderStory();let s=stories[storyIndex];speakNatural(`${s.title}. ${s.text}. Ahora escucha este versículo: ${s.verse}`,{rate:.80,pitch:1.02})}function stopVoice(){if('speechSynthesis'in window)speechSynthesis.cancel()}
+function speakStory(){if(!('speechSynthesis'in window)){alert('Este navegador no tiene voz disponible.');return;}let s=stories[storyIndex];$('nextStoryBtn').disabled=true;const run=++speechRunId;speakNatural(`${s.title}. ${s.text}. Ahora escucha este versículo: ${s.verse}`,{rate:.80,pitch:1.02,onComplete:()=>{if(run!==speechRunId)return;markStoryListened(storyIndex);const index=storyIndex;if(isBookCompletion(index)){setTimeout(()=>celebrateCurrentBook(index),220);} }});$('storyStarNotice').innerHTML='🔊 <strong>Escuchando...</strong> No cierres la historia hasta que termine la narración.';}function stopVoice(){speechRunId++;if('speechSynthesis'in window)speechSynthesis.cancel()}
 const questions=[
 {q:'¿Quién creó los cielos y la tierra?',a:['Dios','Los peces','Los árboles','Los niños'],c:0,why:'La Biblia enseña que Dios creó los cielos y la tierra.'},
 {q:'¿Qué creó Dios el primer día?',a:['Los peces','La luz','Los árboles','Los animales'],c:1,why:'El primer día Dios dijo: “Sea la luz”.'},
